@@ -1,3 +1,11 @@
+#  \     \
+#  _\_____\
+# | |   __  \___       /     __     __   ___   ___   ___   ----         __
+# | |  |__/     |     /    /   /  / __  /__   /__   /  /  /___  /     /   /   /  /  /
+# | |      ____/     /___ /___/  /___/ /___/ /___  /     /     /___  /___/   /__/__/
+# |_|_____/
+
+
 from loggerflow.utils.handler import LoggingHandler
 from loggerflow.backends.telegram import Telegram
 
@@ -21,7 +29,7 @@ class LoggerFlow:
         if not any(note in text for note in self.backend.traceback_filters):
             self.original_stdout.write(text)
         if not self.disable:
-            self.backend.write_flow(text)
+            self.backend.write_flow(text, self.authors, self.project_name)
 
     def flush(self):
         self.original_stdout.flush()
