@@ -1,14 +1,14 @@
 #  \     \
 #  _\_____\
-# | |   __  \___       /     __     __   ___   ___   ___   ----         __
-# | |  |__/     |     /    /   /  / __  /__   /__   /  /  /___  /     /   /   /  /  /
+# | |   __  \___       /     __     __    __   ___   ___   ----         __
+# | |  |__/     |     /    /   /  / __  / __  /__   /  /  /___  /     /   /   /  /  /
 # | |      ____/     /___ /___/  /___/ /___/ /___  /     /     /___  /___/   /__/__/
 # |_|_____/
 
 
 from loggerflow.utils.handler import LoggingHandler
-from loggerflow.backends.telegram import Telegram
 from loggerflow.backends.discord import DiscordSender
+from loggerflow.backends.telegram import TelegramBackend
 
 import traceback
 import logging
@@ -48,13 +48,13 @@ class LoggerFlow:
         self.backends.filters.append(filter_)
 
     @staticmethod
-    def telegram_excepthook(exctype, value, tb):
+    def _telegram_excepthook(exctype, value, tb):
         print("".join(traceback.format_exception(exctype, value, tb)))
 
     def run(self):
         if not self.disable:
             logging_handler = LoggingHandler(self)
-            sys.excepthook = LoggerFlow.telegram_excepthook
+            sys.excepthook = self._telegram_excepthook
             sys.stdout = self
             logging_handler.setLevel(logging.ERROR)
             logging.getLogger().addHandler(logging_handler)

@@ -1,9 +1,9 @@
-from loggerflow.backends.backend import Backend
-
+from loggerflow.backends.abstract_backend import AbstractBackend
+from loggerflow.backends.filters import Filter
 import requests
 
 
-class Telegram(Backend):
+class TelegramBackend(AbstractBackend, Filter):
     """
     TODO write docstring
     """
