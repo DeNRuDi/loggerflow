@@ -7,6 +7,7 @@
 
 
 from loggerflow.utils.handler import LoggingHandler
+from loggerflow.backends.discord import DiscordSender
 from loggerflow.backends.telegram import TelegramBackend
 
 import traceback
@@ -18,18 +19,18 @@ class LoggerFlow:
     """
     TODO write docstring
     """
-    def __init__(self, project_name: str, backend: TelegramBackend | list, authors: list = None, disable: bool = False):
+    def __init__(self, project_name: str, backends: list, disable: bool = False):
         self.project_name = project_name
         self.original_stdout = sys.stdout
-        self.backend = backend
-        self.authors = authors
+        self.backends = backends
         self.disable = disable
 
     def write(self, text):
-        if not any(note in text for note in self.backend.traceback_filters):
-            self.original_stdout.write(text)
-        if not self.disable:
-            self.backend.write_flow(text, self.authors, self.project_name)
+        for backend in self.backends:
+            if not any(note in text for note in backend.traceback_filters):
+                self.original_stdout.write(text)
+            if not self.disable:
+                backend.write_flow(text, self.project_name)
 
     def flush(self):
         self.original_stdout.flush()
@@ -38,13 +39,13 @@ class LoggerFlow:
         """
         Exclude a filter if you need to avoid double stacktrace output (for example, if used non-standard logging)
         """
-        self.backend.traceback_filters.append(filter_)
+        self.backends.traceback_filters.append(filter_)
 
     def exclude_sending_filter(self, filter_: str):
         """
         Exclude filter from sending to telegram
         """
-        self.backend.filters.append(filter_)
+        self.backends.filters.append(filter_)
 
     @staticmethod
     def _telegram_excepthook(exctype, value, tb):
