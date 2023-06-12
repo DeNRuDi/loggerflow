@@ -40,7 +40,6 @@ jobs:
       run: |
         pip install twine
         python setup.py sdist
-        twine upload dist/*
     - name: Publish package to TestPyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
