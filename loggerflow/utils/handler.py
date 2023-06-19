@@ -2,10 +2,10 @@ import logging
 
 
 class LoggingHandler(logging.Handler):
-    def __init__(self, telegram_stream):
+    def __init__(self, flow):
         super().__init__()
-        self.telegram_stream = telegram_stream
+        self.flow = flow
 
     def emit(self, record):
         msg = self.format(record)
-        self.telegram_stream.write(msg)
+        self.flow.write(msg)

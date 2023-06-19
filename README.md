@@ -12,6 +12,15 @@ A new level of bug tracking for your Python projects.
 
 
 <h5> Simple start (with Telegram backend): </h5>
+<details>
+  <summary>Changes (0.0.2 - actual)</summary>
+
+  - v.0.0.2
+    - add logging in threads (to disable logging in threads - pass the parameter thread_logging=False to the LoggerFlow constructor);
+    - minor fixes;
+  - v0.0.1 
+    - create project LoggerFlow;
+</details>
 
 ```
 from loggerflow.backends.telegram import TelegramBackend
