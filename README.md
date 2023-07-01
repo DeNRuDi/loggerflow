@@ -14,6 +14,7 @@ A new level of bug tracking for your Python projects.
 <h5> Simple start (with Telegram backend): </h5>
 <details>
   <summary>Changes (0.0.3 - actual)</summary>
+
   - v.0.0.3
     - added the `traceback='full'` attribute to the LoggerFlow constructor, which allows you to send full, clean or minimal traceback to the backend (depending on your preferences).
     You can pass 3 parameters:
