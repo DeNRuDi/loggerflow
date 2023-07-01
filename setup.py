@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 
-version = '0.0.1'
+version = '0.0.3'
 with open('README.md', 'r', encoding='utf-8') as f:
     long_description = f.read()
 
@@ -10,7 +10,7 @@ setup(
     version=version,
     packages=find_packages(),
     url='https://github.com/DeNRuDi/loggerflow',
-    author='DeNRuDi, kad1m',
+    author='DeNRuDi',
     author_email='denisrudnitskiy0@gmail.com',
     description='A new level of bug tracking for your Python projects',
     long_description=long_description,

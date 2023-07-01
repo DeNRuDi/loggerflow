@@ -5,19 +5,15 @@ from discordwebhook import Discord
 
 
 class DiscordBackend(AbstractBackend, Filter):
-    """
-    TODO write docstring
-    """
     def __init__(self, webhook_url: str, authors: list = None):
         self.webhook_url = webhook_url
         self.authors = authors
         self.discord = Discord(url=self.webhook_url)
 
     def write_flow(self, text: str, project_name: str):
-        if 'Traceback (most recent call last):' in text:
-            if not any(note in text for note in self.filters):
-                try:
-                    authors = '\nAuthors: ' + ', '.join(self.authors) if self.authors else ''
-                    self.discord.post(content=f'Project: {project_name}{authors}\n\n' + text)
-                except Exception:
-                    pass
+        if not any(note in text for note in self.filters):
+            try:
+                authors = '\nAuthors: ' + ', '.join(self.authors) if self.authors else ''
+                self.discord.post(content=f'Project: {project_name}{authors}\n\n' + text)
+            except Exception:
+                pass

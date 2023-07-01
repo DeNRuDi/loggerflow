@@ -13,12 +13,19 @@ A new level of bug tracking for your Python projects.
 
 <h5> Simple start (with Telegram backend): </h5>
 <details>
-  <summary>Changes (0.0.2 - actual)</summary>
-
+  <summary>Changes (0.0.3 - actual)</summary>
+  - v.0.0.3
+    - added the `traceback='full'` attribute to the LoggerFlow constructor, which allows you to send full, clean or minimal traceback to the backend (depending on your preferences).
+    You can pass 3 parameters:
+        - `full` -  Sending full traceback on your backend/backends;
+        - `clean` - Sending your program's stacktrace (clearing lines that were are called from libraries);
+        - `minimal` - Sending a 1 line with name file, number line and last line of your traceback;
+    - minor fixes in project architecture;
+    - writing documentation for project.
   - v.0.0.2
-    - add logging in threads (to disable logging in threads - pass the parameter thread_logging=False to the LoggerFlow constructor);
+    - added logging in threads (to disable logging in threads - pass the parameter thread_logging=False to the LoggerFlow constructor);
     - minor fixes;
-  - v0.0.1 
+  - v.0.0.1 
     - create project LoggerFlow;
 </details>
 
