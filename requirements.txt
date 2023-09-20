@@ -1,6 +1,4 @@
-certifi==2023.5.7
-charset-normalizer==3.1.0
 discordwebhook==1.0.3
-idna==3.4
 requests==2.31.0
-urllib3==2.0.3
+fastapi==0.103.1
+uvicorn==0.23.2

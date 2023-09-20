@@ -4,9 +4,9 @@
 """
 
 __author__ = ['DeNRuDi', 'kad1m']
-__version__ = '0.0.1'
+__version__ = '0.0.4'
 __email__ = ['denisrudnitskiy0@gmail.com', 'sun.moon.kadim@gmail.com']
-__license__ = 'MIT'
+__license__ = 'BSD-3-Clause'
 
 
 from .loggerflow import LoggerFlow

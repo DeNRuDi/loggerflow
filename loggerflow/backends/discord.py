@@ -1,5 +1,5 @@
 from loggerflow.backends.abstract_backend import AbstractBackend
-from loggerflow.backends.filters import Filter
+from loggerflow.utils.filters import Filter
 
 from discordwebhook import Discord
 
