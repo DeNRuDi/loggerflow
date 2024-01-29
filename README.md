@@ -125,7 +125,7 @@ lf.run()
     <summary>FastAPI</summary>
 
 `FastAPI` already contains an automatic excepthook-handler, so errors must be sent
-using the `lf.send_traceback_to_backend(your_error)` method.
+using the `lf.send_data(your_data)` method.
 
 Example:
 ```
@@ -150,7 +150,7 @@ async def index():
 
 @app.exception_handler(Exception)
 async def exception_handler(request, exc):
-    lf.send_traceback_to_backend(traceback.format_exc())
+    lf.send_data_to_backend(traceback.format_exc())
     return JSONResponse({'status': 500})
 
 
