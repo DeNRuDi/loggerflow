@@ -1,0 +1,29 @@
+
+from fastapi import Request, APIRouter
+
+
+from loggerflow.lifecycle.database.queries import LifecycleQuery
+
+
+router = APIRouter(prefix='/loggerflow')
+
+
+@router.post('/heartbeat')
+async def heartbeat(request: Request):
+    heartbeat_info = await request.json()
+    await LifecycleQuery.update_heartbeat(heartbeat_info)
+    return {'status': 200}
+
+
+@router.post('/handshake')
+async def handshake(request: Request):
+    backend_info = await request.json()
+    await LifecycleQuery.create_or_update_project(backend_info)
+    return {'status': 200}
+
+
+@router.post('/project_error')
+async def project_error(request: Request):
+    project_exception = await request.json()
+    await LifecycleQuery.add_project_exception(project_exception)
+    return {'status': 200}

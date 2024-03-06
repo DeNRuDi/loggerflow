@@ -1,0 +1,6 @@
+recursive-include loggerflow/lifecycle/static *
+recursive-include loggerflow/utils *
+recursive-exclude * __pycache__
+recursive-exclude * *.pyc
+recursive-exclude * *.pyo
+exclude loggerflow.egg-info

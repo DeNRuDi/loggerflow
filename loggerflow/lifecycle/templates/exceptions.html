@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block import %}
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link href="/static/css/exceptions.css" rel="stylesheet">
+    <link href="/static/css/pagination.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css">
+{% endblock %}
+
+
+{% block container %}
+
+<div class="container-fluid mt-5">
+  <table id="table" class="table table-left">
+    <thead>
+    <tr>
+        <th class="header">Project name</th>
+        <th>{{ project_name }}</th>
+    </tr>
+    </thead>
+    <tbody>
+      {% if exceptions %}
+          {% for exception in exceptions %}
+              <tr>
+                  <td class="header">Datetime</td>
+                  <td>
+                      <div class="date-icon-container">
+                          {{exception.error_date}}
+                          <div class="icon-container">
+                              <a href="/exceptions/{{project_id}}/delete/{{exception.id}}?page={{page}}">
+                                  <i class="mdi mdi-delete"></i>
+                              </a>
+                          </div>
+                      </div>
+                  </td>
+              </tr>
+
+
+              <tr>
+                  <td class="header">Error</td>
+                  <td>{{exception.header_traceback}}</td>
+              </tr>
+
+              <tr class="line">
+                  <td class="header" style="vertical-align: top;">Full Traceback</td>
+                  <td class="exception">
+                  <details class="exception-details">
+                      {% if exception.clean_traceback %}
+                          <div class="form-check form-switch">
+                              <input class="form-check-input" type="checkbox" id="customSwitch{{ loop.index }}" onchange="toggleTraceback({{ loop.index }})">
+                              <label class="form-check-label ms-2" for="customSwitch{{ loop.index }}">Clean traceback</label>
+                          </div>
+                      {% endif %}
+                      <summary>Show</summary>
+
+                      <pre id="traceback{{ loop.index }}" style="display: block;">{{ exception.traceback }}</pre>
+                      <pre id="cleanTraceback{{ loop.index }}" style="display: none;">{{ exception.clean_traceback }}</pre>
+                  </details>
+                  </td>
+              </tr>
+          {% endfor %}
+
+        {% else %}
+          <tr>
+              <td colspan="2" style="text-align: center; vertical-align: middle; font-size: 18px;">Not exceptions, woohoo...</td>
+          </tr>
+        </tbody>
+        {% endif %}
+  </table>
+
+      {% if total_pages > 1 %}
+          <div class="pagination">
+            {% if has_previous %}
+                <a href="{{ request.url_for('exception_pagination', project_id=project_id) }}?page={{ previous_page }}">Back</a>
+            {% endif %}
+
+            {% for num in range(1, total_pages + 1) %}
+                {% if num == 1 or num == total_pages or num >= page - 3 and num <= page + 3 %}
+                    {% if page == num %}
+                        <span class="current-page">{{ num }}</span>
+                    {% else %}
+                        <a href="{{ request.url_for('exception_pagination', project_id=project_id) }}?page={{ num }}">{{ num }}</a>
+                    {% endif %}
+                {% elif num == 2 or num == total_pages - 1 %}
+                    <span class="dots">...</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if has_next %}
+                <a href="{{ request.url_for('exception_pagination', project_id=project_id) }}?page={{ next_page }}">Next</a>
+            {% endif %}
+        </div>
+    {% endif %}
+
+</div>
+
+<script>
+function toggleTraceback(index) {
+    var checkbox = document.getElementById('customSwitch' + index);
+    var traceback = document.getElementById('traceback' + index);
+    var cleanTraceback = document.getElementById('cleanTraceback' + index);
+
+    if (checkbox.checked) {
+        traceback.style.display = 'none';
+        cleanTraceback.style.display = 'block';
+    } else {
+        traceback.style.display = 'block';
+        cleanTraceback.style.display = 'none';
+    }
+}
+
+function deleteException(projectId, index, element) {
+    $.ajax({
+        url: '/exceptions/' + projectId + '/delete/' + index + '/',
+        type: 'DELETE',
+        success: function(result) {
+            $('#exception-block-' + index).remove();
+        },
+        error: function(xhr, status, error) {
+            console.error('Error deleting exception:', error);
+        }
+    });
+}
+</script>
+{% endblock %}

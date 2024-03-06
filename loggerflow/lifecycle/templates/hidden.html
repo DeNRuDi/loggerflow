@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block container %}
+<script src="/static/js/jquery-3.6.4.min.js"></script>
+<script src="/static/js/loggerflow_functions.js"></script>
+
+<div class="container-fluid mt-5">
+  <table class="table">
+    <thead>
+    <tr>
+      <th>Project Name</th>
+      <th>Error counter</th>
+      <th>Connected Backend</th>
+      <th>Authors</th>
+      <th>Last Heartbeat</th>
+      <th>Implementation</th>
+      <th>Functional</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% if projects %}
+      {% for project in projects %}
+        <tr>
+          <td>{{project.project_name }}</td>
+          <td><a href="/exceptions/{{project.id}}/">{{project.exceptions_count}}</a></td>
+
+          {% if not project.connected_backends %}
+            <td>-</td>
+          {% else %}
+          <td>{{project.connected_backends}}</td>
+          {% endif %}
+
+          {% if project.authors %} <td> {{project.authors}} </td> {% else %} <td>-</td> {% endif %}
+          <td>{{project.last_heartbeat}}</td>
+          {% if project.implementation == 'WEBHOOK' %}
+            <td>Polling</td>
+            <td>
+              <button class="hide return-project-btn" data-id="{{project.id}}">Return</button>
+              <button class="hide delete-project-btn" data-id="{{project.id}}">Delete</button>
+            </td>
+
+          {% elif project.implementation == 'WEBSOCKET' %}
+            <td>Socket</td>
+            <td>
+              <button class="hide return-project-btn" data-id="{{project.id}}">Return</button>
+              <button class="hide delete-project-btn" data-id="{{project.id}}">Delete</button>
+            </td>
+
+          {% else %}
+            <td>-</td>
+          {% endif %}
+
+        </tr>
+      {% endfor %}
+    {% else %}
+      <tr>
+        <td colspan="8">
+        Not hidden projects, woohoo...
+      </tr>
+    {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

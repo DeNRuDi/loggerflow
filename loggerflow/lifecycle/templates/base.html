@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LoggerFlow</title>
+  	<link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="icon" href="/static/loggerflow.png" type="image/png">
+    <link href="/static/css/loggerflow.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300&family=Nanum+Myeongjo&family=Spectral:ital,wght@0,400;1,200&display=swap" rel="stylesheet">
+
+    {% block import %}
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/welcome.css">
+    <link href="/static/css/loggerflow.css" rel="stylesheet">
+    <link href="/static/css/progress.css" rel="stylesheet">
+  {% endblock %}
+  </head>
+  <body class="m-2">
+      {% include 'navbar.html' %}
+
+    <div class="container-fluid my-2">
+      <div id="alert-container"></div>
+      <input type="hidden" value="{{ url_prefix or '' }}" id='url_prefix'>
+    </div>
+
+    {% block container %}
+    {% endblock %}
+
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/jquery-3.6.4.min.js"></script>
+
+  </body>
+</html>
