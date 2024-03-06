@@ -288,14 +288,15 @@ app.autodiscover_tasks()
 ```
 </details>
 
-## Creating custom backend
+## Creating custom backends
+
+<details>
+    <summary>Custom Backend</summary>
 
 To create a custom backend, you need to inherit from `AbstractBackend`, and 
 be sure to override 2 method `write_flow(text: str, project_name: str, *args, **kwargs)`.
 
 Let's give a simple example for writing to Redis:
-<details>
-    <summary>Custom RedisBackend</summary>
 
     # pip3 install redis
     from redis import Redis
