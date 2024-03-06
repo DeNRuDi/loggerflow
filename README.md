@@ -118,61 +118,64 @@ Example with full stacktrace from your app:
 Example with clean stacktrace from your app:
     
 ![img_1.png](clean_exceptions.png)
-    
+
 </details>
 
-##  Simple start (without Lifecycle)
+##  Simple start without Lifecycle
 
-```
-from loggerflow.backends import TelegramBackend
-from loggerflow import LoggerFlow
+<details>
+    <summary>Info about Loggerflow </summary>
 
+<h5> Example with Telegram backend: </h5>
 
-backend = TelegramBackend(
-    token='telegram_token',
-    chat_id=-123456789,
-    authors=['@DeNRuDi', ]
-)
-
-lf = LoggerFlow(project_name='Test', backend=backend)
-lf.run()
-
-raise Exception('Test Error')
-```
-
+    from loggerflow.backends import TelegramBackend
+    from loggerflow import LoggerFlow
+    
+    
+    backend = TelegramBackend(
+        token='telegram_token',
+        chat_id=-123456789,
+        authors=['@DeNRuDi', ]
+    )
+    
+    lf = LoggerFlow(project_name='Test', backend=backend)
+    lf.run()
+    
+    raise Exception('Test Error')
+    
+    
 <h5> Example with multiple backends: </h5>
-
-```
-from loggerflow.backends import TelegramBackend, DiscordBackend
-from loggerflow import LoggerFlow
-
-backend_telegram = TelegramBackend(
-    token='bot_token',
-    chat_id=-1234567890,
-    authors=['@telegram_username', ]
-)
-
-backend_discord = DiscordBackend(
-    webhook_url='webhook_url',
-    authors=['@discord_username', ]
-)
-
-lf = LoggerFlow(project_name='Test', backend=[backend_telegram, backend_discord])
-lf.run()
-
-raise Exception('Test Error')
-```
-
+    
+    from loggerflow.backends import TelegramBackend, DiscordBackend
+    from loggerflow import LoggerFlow
+    
+    backend_telegram = TelegramBackend(
+        token='bot_token',
+        chat_id=-1234567890,
+        authors=['@telegram_username', ]
+    )
+    
+    backend_discord = DiscordBackend(
+        webhook_url='webhook_url',
+        authors=['@discord_username', ]
+    )
+    
+    lf = LoggerFlow(project_name='Test', backend=[backend_telegram, backend_discord])
+    lf.run()
+    
+    raise Exception('Test Error')
+    
+    
 <h5> Exclude traceback which should not be sent: </h5>
+    
+    
+    lf = LoggerFlow(project_name='Test', backend=backend)
+    lf.exclude('ValueError')
+    lf.exclude('502 Bad Gateway')
+    lf.run()
+</details>
 
-```
-lf = LoggerFlow(project_name='Test', backend=backend)
-lf.exclude('ValueError')
-lf.exclude('502 Bad Gateway')
-lf.run()
-```
-
-<h5>Simple integrations with frameworks</h5>
+## Simple integrations with frameworks
 <details>
     <summary>Django</summary>
 
@@ -285,7 +288,7 @@ app.autodiscover_tasks()
 ```
 </details>
 
-<h5>Creating custom backend</h5>
+## Creating custom backend
 
 To create a custom backend, you need to inherit from `AbstractBackend`, and 
 be sure to override 2 method `write_flow(text: str, project_name: str, *args, **kwargs)`.
