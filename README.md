@@ -45,10 +45,9 @@
     - create project LoggerFlow;
 </details>
 
-<h5>  </h5>
-
+## Simple start with Lifecycle
 <details>
-    <summary>Simple start with Lifecycle</summary>
+    <summary>Info about Loggerflow Lifecycle</summary>
     
 To take advantage of state tracking for your applications, you need to do 2 things:
     
@@ -72,9 +71,6 @@ You can also customize the server for yourself, including authorization via the 
     -d --database | SQLAlchemy database connection string, default is "sqlite+aiosqlite:///loggerflow.db"
     -a --auth | Auth credentials in format login:password
     --disable-log | Disable uvicorn log in terminal
-
-
-
 </details>
 
 After server running you will see in browser this page:
@@ -125,7 +121,7 @@ Example with clean stacktrace from your app:
     
 </details>
 
-<h5> Simple start (without Lifecycle): </h5>
+##  Simple start (without Lifecycle)
 
 ```
 from loggerflow.backends import TelegramBackend
