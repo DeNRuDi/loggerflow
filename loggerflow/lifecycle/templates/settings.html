@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block container %}
+<script src="/static/js/jquery-3.6.4.min.js"></script>
+<script src="/static/js/loggerflow_functions.js"></script>
+<link href="/static/css/welcome.css" rel="stylesheet">
+
+<div class="container-fluid mt-5">
+  <table class="table">
+    <thead>
+        <tr>
+            <th class="header">Setting</th>
+            <th class="header">Value</th>
+        </tr>
+    </thead>
+
+    <tbody>
+      <tr>
+          <td>Show First Clean Traceback
+              <p>in the exceptions tab</p>
+          </td>
+          <td>
+            <div class="form-check form-switch d-flex justify-content-center">
+                <input class="form-check-input custom-switch" type="checkbox" id="showFirstCleanTraceback"
+                {% if settings.get('show_first_clean_traceback') %} checked {% endif %}
+                >
+            </div>
+          </td>
+      </tr>
+      <tr>
+          <td>Backlight your line in traceback
+              <p>add backlight line traceback for your code</p>
+          </td>
+          <td>
+            <div class="form-check form-switch d-flex justify-content-center">
+                <input class="form-check-input custom-switch" type="checkbox" id="backlightTraceback"
+                  {% if settings.get('backlight_traceback') %} checked {% endif %}
+                >
+            </div>
+          </td>
+      </tr>
+      <tr>
+          <td>
+              Show Process Memory
+              <p>display also application consumption</p>
+          </td>
+          <td>
+            <div class="form-check form-switch d-flex justify-content-center">
+                <input class="form-check-input custom-switch" type="checkbox" id="showProcessMemory"
+                  {% if settings.get('show_process_memory') %} checked {% endif %}
+                >
+            </div>
+          </td>
+      </tr>
+
+{#      <tr>#}
+{#          <td>Save app metrics#}
+{#              <p>realtime (to save space)/persistent</p>#}
+{#          </td>#}
+{#          <td>#}
+{#            <div class="form-check form-switch d-flex justify-content-center">#}
+{#                <input class="form-check-input custom-switch" type="checkbox" id="saveMetrics"#}
+{#                  {% if settings.get('save_metrics') %} checked {% endif %}#}
+{#                >#}
+{#            </div>#}
+{#          </td>#}
+{#      </tr>#}
+    </tbody>
+  </table>
+
+  <div class="d-flex justify-content-end mt-5">
+    <button id="save-btn" class="btn btn-primary">Save</button>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function() {
+    $('#save-btn').click(function() {
+      let showFirstCleanTraceback = $('#showFirstCleanTraceback').is(':checked');
+      let showProcessMemory = $('#showProcessMemory').is(':checked');
+      // let saveMetrics = $('#saveMetrics').is(':checked');
+      let backlightTraceback = $('#backlightTraceback').is(':checked');
+
+      $.ajax({
+        type: 'POST',
+        url: '/change_settings',
+        data: JSON.stringify({
+          'show_first_clean_traceback': showFirstCleanTraceback,
+          'show_process_memory': showProcessMemory,
+          // 'save_metrics': saveMetrics,
+          'backlight_traceback': backlightTraceback,
+        }),
+        success: function(response) {
+          alert('Data saved');
+        },
+        error: function() {
+          alert('Error at saving changes');
+        }
+      });
+    });
+  });
+</script>
+
+{% endblock %}
