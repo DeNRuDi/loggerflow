@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+
+{% block import %}
+
+    <script src="/static/js/jquery-3.6.4.min.js"></script>
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/loggerflow_functions.js"></script>
+    <link href="/static/css/loggerflow.css" rel="stylesheet">
+    <link href="/static/css/welcome.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
+{% block container %}
+    <div class="tab-content mt-3 ms-2 me-2" id="metricsTabsContent">
+        <ul class="nav nav-tabs" id="projectTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="projects-info-tab" data-bs-toggle="tab"
+                        data-bs-target="#projects-info" type="button" role="tab" aria-controls="projects-info"
+                        aria-selected="true">Connected apps
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link disabled" id="statistic-info-tab" data-bs-toggle="tab"
+                        data-bs-target="#statistic"
+                        type="button" role="tab" aria-controls="statistic" aria-selected="false">Statistic
+                </button>
+
+            </li>
+        </ul>
+
+        <div class="tab-content mt-4" id="metricsTabsContent">
+            <div class="tab-pane fade show active" id="projects-info" role="tabpanel"
+                 aria-labelledby="projects-info-tab">
+                <table id="projects-info" class="table">
+                    <thead>
+                    <tr>
+                        <th>Project Name</th>
+                        <th>Last Status</th>
+                        <th>Last Heartbeat</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% if projects %}
+                        {% for project in projects %}
+                            <tr id="project-{{ project_id }}">
+                                <td>{{ project.project_name }}</td>
+                                <td class="text-primary heartbeat">
+                                    {% if project.status == 'ONLINE' %}
+                                        <img class="proj-status" src="/static/green_power.svg"/>
+                                    {% else %}
+                                        <img class="proj-status" src="/static/red_power.svg"/>
+                                    {% endif %}
+                                </td>
+                                <td>{{ project.last_heartbeat }}</td>
+                                <td>
+                                    <button class="btn btn-primary"
+                                            onclick="showMetricsProject({{ project.id }}, '{{ project.project_name }}')">
+                                        View
+                                    </button>
+                                    <button class="btn btn-primary"
+                                            onclick="deleteMetricsProject({{ project.id }}, '{{ project.project_name }}')">
+                                        Clear statistic
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4">
+                                {% include 'welcome_metrics.html' %}
+                            </td>
+                        </tr>
+                    {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="tab-pane fade" id="statistic" role="tabpanel" aria-labelledby="statistic-info-tab">
+                <div>
+                    <label for="time-filter" class="form-label me-2">Filter by:</label>
+                    <select id="time-filter" class="form-select d-inline-block w-auto" onchange="updateTimeFilter()">
+                        <option value="1">Last 1 minute</option>
+                        <option value="5" selected>Last 5 minutes</option>
+                        <option value="30">Last 30 minutes</option>
+                        <option value="60">Last 1 hour</option>
+                        <option value="180">Last 3 hours</option>
+                        <option value="1440">Last 1 day</option>
+                        <option value="4320">Last 3 days</option>
+                        <option value="10080">Last 7 days</option>
+                    </select>
+                </div>
+                <div id="metrics-graph" style="width: 100%; height: 500px;"></div>
+            </div>
+
+        </div>
+    </div>
+
+
+
+<script>
+function deleteMetricsProject(projectId, projectName) {
+    const userConfirmed = window.confirm(`Are you sure you want to delete statistic data for the project ${projectName}?`);
+
+    if (userConfirmed) {
+        fetch(`/clear_metrics_info/${projectId}/`, {
+            method: 'DELETE',
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            alert('Data deleted');
+        })
+        .catch(error => {
+           alert('Delete failed!');
+        });
+    } else {
+    }
+}
+
+
+const statisticTab = document.getElementById('statistic-info-tab');
+const graphContainer = document.getElementById('metrics-graph');
+const timeFilter = document.getElementById('time-filter');
+let currentProjectId = null;
+
+function updateTimeFilter() {
+    if (currentProjectId)
+        fetchDataAndUpdateGraph(currentProjectId);
+}
+
+
+const graphData = {
+    timestamps: [],
+    cpu: [],
+    process_memory: [],
+    used_all_memory: [],
+    availability: [],
+    last_heartbeat: null,
+};
+
+const cpuTrace = {
+    x: graphData.timestamps,
+    y: graphData.cpu,
+    mode: 'lines',
+    name: 'CPU Usage (%)',
+};
+
+const processMemoryTrace = {
+    x: graphData.timestamps,
+    y: graphData.process_memory,
+    mode: 'lines',
+    visible: 'legendonly',
+    name: 'Process Memory (GB)',
+};
+
+const memoryTrace = {
+    x: graphData.timestamps,
+    y: graphData.used_all_memory,
+    mode: 'lines',
+    name: 'Used Host Memory (GB)',
+    visible: 'legendonly',
+
+};
+
+// const availabilityTrace = {
+//    x: graphData.timestamps,
+//    y: graphData.availability,
+//    mode: 'lines',
+//    name: 'Availability (0/1)',
+//    line: {dash: 'dot', color: 'red'},
+// };
+
+
+const layout = {
+    grid: {rows: 1, columns: 1, pattern: 'independent'},
+    xaxis: {title: 'Time'},
+    yaxis: {title: 'Usage (%) / Memory (GB)'},
+    margin: {t: 40, l: 50, r: 20, b: 40},
+    responsive: true,
+};
+
+Plotly.newPlot(graphContainer, [
+    {
+        x: graphData.timestamps,
+        y: graphData.cpu,
+        mode: 'lines',
+        name: 'CPU Usage (%)',
+        xaxis: 'x1',
+        yaxis: 'y1',
+    },
+    {
+        x: graphData.timestamps,
+        y: graphData.process_memory,
+        mode: 'lines',
+        name: 'Process Memory (GB)',
+        xaxis: 'x1',
+        yaxis: 'y1',
+    },
+    {
+        x: graphData.timestamps,
+        y: graphData.used_all_memory,
+        mode: 'lines',
+        name: 'Used Host Memory (GB)',
+        xaxis: 'x1',
+        yaxis: 'y1',
+    },
+    // {
+    //    x: graphData.timestamps,
+    //    y: graphData.availability,
+    //    mode: 'line',
+    //    name: 'Availability (0/1)',
+    //    line: {dash: 'dot', color: 'red'},
+    //   xaxis: 'x2',
+    //    yaxis: 'y2',
+    // },
+], layout);
+
+Plotly.newPlot(graphContainer, [cpuTrace, processMemoryTrace, memoryTrace], layout);
+
+
+function fetchDataAndUpdateGraph(projectId) {
+    fetch(`/metrics_info/${projectId}/?filter_time=${timeFilter.value}`)
+        .then(response => response.json())
+        .then(data => {
+            const timestamps = data.timestamps;
+            graphData.cpu = data.cpu;
+            graphData.process_memory = data.process_memory;
+            graphData.used_all_memory = data.used_all_memory;
+            // graphData.availability = data.availability;
+
+            graphData.timestamps = timestamps.map(t => new Date(t).toISOString());
+            if (graphData.timestamps.length === 0) {
+                Plotly.react(graphContainer, [], {
+                    ...layout,
+                    annotations: [
+                        {
+                            text: "No data to display",
+                            xref: "paper",
+                            yref: "paper",
+                            x: 0.5,
+                            y: 0.5,
+                            showarrow: false,
+                            font: {
+                                size: 20,
+                                color: "blue",
+                            },
+                        },
+                    ],
+                });
+            } else {
+                const isSinglePoint = graphData.timestamps.length === 1;
+                const traceMode = isSinglePoint ? 'lines+markers' : 'lines';
+                Plotly.react(graphContainer, [
+                    {
+                        x: graphData.timestamps,
+                        y: graphData.cpu,
+                        mode: traceMode,
+                        name: 'CPU Usage (%)',
+                        marker: isSinglePoint ? {size: 10} : {},
+                    },
+                    {
+                        x: graphData.timestamps,
+                        y: graphData.process_memory,
+                        mode: traceMode,
+                        name: 'Process Memory (GB)',
+                        marker: isSinglePoint ? {size: 10} : {},
+                    },
+                    {
+                        x: graphData.timestamps,
+                        y: graphData.used_all_memory,
+                        mode: traceMode,
+                        name: 'Used Host Memory (GB)',
+                        marker: isSinglePoint ? {size: 10} : {},
+                    },
+                    // {
+                    //   x: graphData.timestamps,
+                    //    y: graphData.availability,
+                    //    mode: traceMode,
+                    //    name: 'Availability (0/1)',
+                    //    line: {dash: 'dot', color: 'red'},
+                    //    marker: isSinglePoint ? {size: 10} : {},
+                    // }
+                ], layout);
+                }
+            })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            alert('Error updating chart. Please reload the page.');
+        });
+}
+
+
+function clearGraph() {
+    currentProjectId = null;
+    graphData.timestamps.length = 0;
+    graphData.cpu.length = 0;
+    graphData.used_all_memory.length = 0;
+    graphData.process_memory.length = 0;
+    // graphData.availability.length = 0;
+    timeFilter.value = 5;
+
+    Plotly.purge(graphContainer);
+    Plotly.newPlot(graphContainer, [
+        {
+            x: graphData.timestamps,
+            y: graphData.cpu,
+            mode: 'lines',
+            name: 'CPU Usage (%)',
+            xaxis: 'x1',
+            yaxis: 'y1',
+        },
+        {
+            x: graphData.timestamps,
+            y: graphData.process_memory,
+            mode: 'lines',
+            name: 'Process Memory (GB)',
+            xaxis: 'x1',
+            yaxis: 'y1',
+        },
+        {
+            x: graphData.timestamps,
+            y: graphData.used_all_memory,
+            mode: 'lines',
+            name: 'Used Host Memory (GB)',
+            xaxis: 'x1',
+            yaxis: 'y1',
+        },
+        // {
+        //    x: graphData.timestamps,
+        //    y: graphData.availability,
+        //    mode: 'lines',
+        //    name: 'Availability (0/1)',
+        //   line: {dash: 'dot', color: 'red'},
+        //    xaxis: 'x2',
+        //    yaxis: 'y2',
+        // },
+    ], layout);
+}
+
+function showMetricsProject(projectId, projectName) {
+    currentProjectId = projectId;
+
+    const statisticTab = document.getElementById('statistic-info-tab');
+    const tabInstance = new bootstrap.Tab(statisticTab);
+    tabInstance.show();
+    Plotly.relayout(graphContainer, {
+        title: `${projectName} Metrics`
+    });
+    fetchDataAndUpdateGraph(projectId);
+}
+
+document.addEventListener('shown.bs.tab', (event) => {
+    if (event.target.id !== 'statistic-info-tab') {
+        clearGraph();
+    } else if (event.target.id === 'statistic-info-tab') {
+         Plotly.Plots.resize(graphContainer);
+    }
+});
+
+window.onresize = function () {
+    Plotly.Plots.resize(graphContainer);
+};
+</script>
+
+{% endblock %}
