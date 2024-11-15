@@ -8,29 +8,32 @@
 # BSD 3-Clause License
 
 from loggerflow.lifecycle import WebhookLifecycle, WebSocketLifecycle
+from loggerflow.lifecycle.utils.formatter import ANSIColors
 from loggerflow.lifecycle.lifecycle_cli import Lifecycle
+from loggerflow.excepthook import ExceptHook
 
 from loggerflow.utils.stack_cleaner import StackCleaner
 
 from loggerflow.utils.filters import Filter
 from loggerflow.backends import Backend
 
-from traceback import format_exception, format_exc
 from typing import Union, Literal, Optional
+from traceback import format_exc
 
 import threading
 import asyncio
 import sys
+import re
 
 
 LIFECYCLE_BACKENDS = (WebhookLifecycle, WebSocketLifecycle)
 LifecycleBackend = Union[WebhookLifecycle, WebSocketLifecycle]
 
 
-class LoggerFlow(Filter):
+class LoggerFlow(ExceptHook, Filter):
 
-    def __init__(self, project_name: str, backend: Backend,  disable: bool = False,
-                 thread_logging: bool = True, traceback: Literal['full', 'clean', 'minimal'] = 'full'):
+    def __init__(self, project_name: str, backend: Backend = None, disable: bool = False, thread_logging: bool = True,
+                 traceback: Literal['full', 'clean', 'minimal'] = 'full'):
         """
         :param project_name: Name of your project
         :param backend: Backend for sending traceback logging
@@ -66,7 +69,7 @@ class LoggerFlow(Filter):
         convenient display errors on the web page with a cleaned stacktrace if desired.
         """
 
-        self.thread_logging = thread_logging
+        super().__init__(disable, thread_logging)
         self.project_name = project_name
         self._traceback = traceback
         self.backends = backend
@@ -118,12 +121,19 @@ class LoggerFlow(Filter):
         }
         return backend_info
 
+    @staticmethod
+    def _clean_format(text: str) -> str:
+        pattern = '|'.join([re.escape(color) for color in ANSIColors.STATIC_COLORS])
+        text = re.sub(pattern, '', text)
+        return text
+
+
     def write(self, text: str):
         if not any(note in text for note in self.traceback_filters):
             self.original_stdout.write(text)
 
         if not self.disable:
-            self.send_traceback(text)
+            self.send_traceback(self._clean_format(text))
 
     def add_backend(self, backend: Backend):
         if isinstance(self.backends, list) and backend not in self.backends:
@@ -213,7 +223,7 @@ class LoggerFlow(Filter):
                 self._send_data_to_lifecycle(self.backends, text)
 
     def _send_data_to_lifecycle(self, lf_backend: LifecycleBackend, text: str):
-        if lf_backend.loop:
+        if hasattr(lf_backend, 'loop') and lf_backend.loop:
             if lf_backend.wait_send:
                 send_event = threading.Event()
                 asyncio.run_coroutine_threadsafe(
@@ -235,24 +245,3 @@ class LoggerFlow(Filter):
         else:
             if not isinstance(self.backends, LIFECYCLE_BACKENDS):
                 self.backends.write_flow(text, self.project_name)
-
-    def flush(self):
-        self.original_stdout.flush()
-
-    def isatty(self):
-        return self.original_stdout.isatty()
-
-    @staticmethod
-    def _except_hook(exctype, value, tb):
-        print("".join(format_exception(exctype, value, tb)))
-
-    def _thread_excepthook(self, args):
-        exctype, value, tb = args.exc_type, args.exc_value, args.exc_traceback
-        self._except_hook(exctype, value, tb)
-
-    def run(self):
-        if not self.disable:
-            sys.excepthook = self._except_hook
-            if self.thread_logging:
-                threading.excepthook = self._thread_excepthook
-            sys.stdout = self
