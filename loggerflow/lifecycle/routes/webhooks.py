@@ -1,9 +1,8 @@
-
 from fastapi import Request, APIRouter
 
 
-from loggerflow.lifecycle.database.queries import LifecycleQuery
-
+from loggerflow.lifecycle.database.queries import LifecycleQuery, MetricQuery
+from loggerflow.lifecycle.utils.alarm_listener import AlarmListener
 
 router = APIRouter(prefix='/loggerflow')
 
@@ -12,6 +11,12 @@ router = APIRouter(prefix='/loggerflow')
 async def heartbeat(request: Request):
     heartbeat_info = await request.json()
     await LifecycleQuery.update_heartbeat(heartbeat_info)
+    await MetricQuery.create_metric(heartbeat_info)
+    project = await LifecycleQuery.get_project_by_name(heartbeat_info['project_name'])
+
+    if not project.hidden:
+        al = AlarmListener()
+        await al.start_project_listener(project.id, project_name=project.project_name)
     return {'status': 200}
 
 
