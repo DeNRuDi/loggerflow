@@ -1,4 +1,5 @@
 recursive-include loggerflow/lifecycle/static *
+recursive-include loggerflow/lifecycle/templates *
 recursive-include loggerflow/utils *
 recursive-exclude * __pycache__
 recursive-exclude * *.pyc
