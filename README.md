@@ -9,13 +9,37 @@
  |_|_____/
 ```
 
-<h3>A new level of bug tracking for your Python projects.</h2>
+<h3>Simple and fast solution of bug tracking for your Python projects and backlight your project lines in traceback for during development.</h2>
 
-![StartImage](show.png)
+![StartImage](photos/loggerflow.png)
+![StartImage](photos/project_metrics.png)
+**Loggerflow is not just a library for tracking the status of your projects. This library is:**.
+ - stacktracer with backlighting of **your project calls** (you most likely haven't seen anything like this before);
+ - trace collector, quick connection and sending traceback to `Telegram`, `Discord` or `File`, as well as a ready-made interface for quick connection of your backend for sending traces;
+ - lifecycle dashboard of connected projects, display of a clean traceback with a call only from your project;
+ - statistics with graphs up to 7 days of your application by cpu/proceess memory/total memory;
+ - fast alarms connection to projects, as well as a ready-made interface for quick connection of your alarms;
+ - connection of projects in lifecycle based on webhook or websocket;
+ - convenient and universal logger for writing to an existing or created backend logs (and not only) with synchronous/asynchronous methods.
 
 <details>
-  <summary>Changes (0.0.5 - actual)</summary>
-
+  <summary>Changes (0.0.6 - actual)</summary>
+ 
+- v. 0.0.6 
+   - added metrics tracking of connected applications via lifecycle;
+   - added alarm tracking of connected applications via lifecycle (in 0.0.7 will be added triggers and improved version);
+   - added example with create custom alarmer, and connect to LoggerFlow Lifecycle;
+   - added support for tracking process memory consumption (core `psutil`);
+   - added in error window displays backlighting tracebacks your project lines of code. This can be disabled in the settings.
+   - the dog's eye closes when you switch from the main page to another tab:);
+   - improved traceback cleaning, bug fixes with cleaning;
+   - fix bugs with websocket lifecycle;
+   - redesigned dashboard with a nice interface, also added settings;
+   - complete transfer of event loop manual management to `asyncio.run`. You can still pass your loop, but then you have to manage it yourself;
+   - improved traceback cleaning, bug fixes with cleaning;
+   - added traceback backlighter for your project line in traces, use for this `TracebackBacklighter`;
+   - in 0.0.7 will be added improved authorization and backend secret key for requests; 
+   - **0.0.6 version is not compatible with 0.0.5 version (server and client). In 0.0.7 will be added support for such cases with projects when the versions differ.**
  - v. 0.0.5
    - added tracking the status of your applications, use class `WebhookLifecycle` and `WebSocketLifecycle`; 
    - rename method `send_traceback_to_backend` to `send_traceback`;
@@ -71,11 +95,13 @@ You can also customize the server for yourself, including authorization via the 
     -d --database | SQLAlchemy database connection string, default is "sqlite+aiosqlite:///loggerflow.db"
     -a --auth | Auth credentials in format login:password
     --disable-log | Disable uvicorn log in terminal
+    -c --custom-alarm | single class or comma-separated list of custom alarm classes (e.g., "name_of_file.CustomAlarmBackend, test.AnotherAlarm")')
+
 </details>
 
 After server running you will see in browser this page:
 
-![welcome.png](welcome.png)
+![welcome.png](photos/start.png)
 
 <b>2) Connect your app to `LoggerFlow` Server</b>
 
@@ -106,18 +132,67 @@ Example with `WebSocketLifecycle`:
 
 In the browser you will see something like:
 
-![img.png](show.png)
+![img.png](photos/loggerflow.png)
 In the browser, you can track errors that occurred in your applications, 
 view detailed tracebacks, and, if necessary, clear unnecessary library calls in the stacktrace, showing 
 only your lines of code.
 
 Example with full stacktrace from your app:
 
-![img.png](exceptions.png)
+![img.png](photos/exceptions.png)
 
 Example with clean stacktrace from your app:
     
-![img_1.png](clean_exceptions.png)
+![img.png](photos/clean_exceptions.png)
+
+### Alarms
+
+![img.png](photos/connected_alarms.png)
+LoggerFlow supports alarms, they can be easily and quickly connected to your projects. To make sure that the alarm is working, 
+you can see the Alarm Working status next to the project.
+
+You have 3 alarms to choose from:
+- TelegramBackend;
+- DiscordBackend;
+- FileBackend;
+- or your custom alarm backends;
+
+There is also a ready-made interface for quickly connecting your alarm.
+How to connect your custom alarm - see the in "**Creating custom backends/alarms section**".
+
+You will see a window like this:
+
+![img.png](photos/create_alarm.png)
+
+Once the alarm is connected to the project - you will also see alarm messages in the **"Alarms info"** tab.
+
+![img.png](photos/alarms_info.png)
+
+Future versions will also add triggers for a specified limit on cpu/memory.
+
+### Metrics
+
+![img.png](photos/metrics.png)
+LoggerFlow supports metrics for your connected applications.
+Metrics are automatically collected when you connect your app via lifecycle. In future versions will be added setting 
+to enable statistics collection for concrete projects.
+
+Once the data has been collected, you will be able to view graphs for a specific period.
+
+![img.png](photos/project_metrics.png)
+You will see data for up to 7 days with the following intervals:
+- 1 minute;
+- 5 minutes;
+- 30 minutes;
+- 1 hour;
+- 3 hours;
+- 1 day;
+- 3 days;
+- 7 days.
+
+Currently, only partial data clearing is supported after 7 days: when you go to the dashboard or clear the data yourself via the button. This will be optimized in future versions.
+
+You may also be interested in looking at `TracebackBacklighter`, the description is just below.
 
 </details>
 
@@ -174,6 +249,42 @@ Example with clean stacktrace from your app:
     lf.exclude('502 Bad Gateway')
     lf.run()
 </details>
+
+##  Simple start with TracebackBacklighter
+
+<details>
+    <summary>Info about TracebackBacklighter </summary>
+
+TracebackBacklighter is a tool that backlights lines of code from your project when an error occurs.
+<h5> Example with TracebackBacklighter: </h5>
+![img.png](photos/traceback_backlighter.png)
+    
+    import requests
+    from loggerflow import TracebackBacklighter
+    
+    tb = TracebackBacklighter(backlight='myline', color='red')
+    tb.run()
+    
+    
+    r = requests.get('https://incorrect.site')
+    # or some exception, for example raise Exception('Test Exception')
+
+**You can also receive clean traceback (ideal for development):**
+
+![img.png](photos/traceback_backlighter_clean.png)
+    
+    import requests
+    from loggerflow import TracebackBacklighter
+    
+    tb = TracebackBacklighter(backlight='clean')
+    tb.run()
+    
+    
+    r = requests.get('https://incorrect.site')
+    # or some exception, for example raise Exception('Test Exception')
+
+</details>
+
 
 ## Simple integrations with frameworks
 <details>
@@ -288,13 +399,12 @@ app.autodiscover_tasks()
 ```
 </details>
 
-## Creating custom backends
+## Creating custom backends/alarms
 
 <details>
     <summary>Custom Backend</summary>
-
 To create a custom backend, you need to inherit from `AbstractBackend`, and 
-be sure to override 2 method `write_flow(text: str, project_name: str, *args, **kwargs)`.
+be sure to override 2 method `write_flow` and `async_write_flow`.
 
 Let's give a simple example for writing to Redis:
 
@@ -332,5 +442,44 @@ Let's give a simple example for writing to Redis:
     lf.run()
     
     raise Exception('Your test exception')
+
+</details>
+
+<details>
+    <summary>Custom Alarmer</summary>
+To create a custom Alarmer backend, you need to inherit from `AbstractAlarmBackend`, and be sure to override 1 method `async_write_flow`
+
+The constructor should contain only those fields that are specified in `alarm_required_fields`.
+
+Let's give a simple example for creating Custom Alarm and connect to LoggerFlow Lifecycle:
+    
+    # pip3 install aiohttp
+    from loggerflow.backends.abstract_backend import AbstractAlarmBackend
+    from aiohttp import ClientSession
+    
+    
+    class CustomAlarm(AbstractAlarmBackend):
+        alarmer_name = 'TestAlarmer' # if not set, then will be used class name
+        alarm_required_fields = ['email', 'api_key'] # required fields for form to create your custom alarm
+    
+        def __init__(self, email, api_key):
+            self._email = email
+            self._api_key = api_key
+    
+        async def async_write_flow(self, text: str, project_name: str, *args, **kwargs):
+            async with ClientSession() as session:
+                async with session.post(
+                        'http://example.com/',
+                        headers={'X-EMAIL': self._email, 'X-API-KEY': self._api_key}
+                ) as response:
+                    print(response.status)
+
+After creation, connect it as:
+
+`loggerfow run --host 127.0.0.1 --port 8000 --custom-alarm "your_file.CustomAlarm"`
+
+You can also list alarms separated by commas.
+
+`loggerfow run --host 127.0.0.1 --port 8000 --custom-alarm "your_file.CustomAlarm, your_file.NewCustomAlarm"`
 
 </details>
