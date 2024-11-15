@@ -3,9 +3,9 @@ from loggerflow.lifecycle.utils.formatter import ColorFormatter
 from loggerflow.exceptions import LifecycleException
 
 from aiohttp import ClientWebSocketResponse, ClientSession
-from asyncio import Task, AbstractEventLoop
-
 from typing import Optional, Union
+from functools import partial
+from asyncio import Task, AbstractEventLoop
 
 import threading
 import asyncio
@@ -13,16 +13,15 @@ import logging
 import aiohttp
 import atexit
 import psutil
+import time
 
-
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-ch.setFormatter(ColorFormatter("| LoggerFlow %(levelname)s | %(message)s"))
-
+sh = logging.StreamHandler()
+sh.setLevel(logging.DEBUG)
+sh.setFormatter(ColorFormatter("| LoggerFlow %(levelname)s | %(message)s"))
 
 logger = logging.getLogger("LoggerFlow")
 logger.setLevel(logging.DEBUG)
-logger.addHandler(ch)
+logger.addHandler(sh)
 
 
 class Lifecycle:
@@ -43,60 +42,50 @@ class Lifecycle:
         self.mechanism: Optional[Union[ClientWebSocketResponse, ClientSession]] = None
         self.implementation = None
 
-    def _run_auto_release(self):
-        stop_event = threading.Event()
-        asyncio.run_coroutine_threadsafe(self.__stop_async_loop(stop_event), self.loop)
-        stop_event.wait()
-        logger.debug('Lifecycle auto released')
-
     @staticmethod
     def get_client_readings() -> dict:
         cpu_usage = psutil.cpu_percent(interval=0.1)
         memory_info = psutil.virtual_memory()
+        process = psutil.Process()
         used_memory_gb = memory_info.used / (1024 ** 3)
         total_memory_gb = memory_info.total / (1024 ** 3)
+        process_memory_gb = process.memory_info().rss / (1024 ** 3)
 
-        return {'cpu': str(cpu_usage), 'used_memory': f'{used_memory_gb:.2f}', 'total_memory': f'{total_memory_gb:.2f}'}
+        return {
+            'cpu': str(cpu_usage),
+            'used_memory': f'{used_memory_gb:.2f}',
+            'total_memory': f'{total_memory_gb:.2f}',
+            'process_memory': f'{process_memory_gb:.2f}'
+        }
 
-    def __start_async_loop(self):
-        asyncio.set_event_loop(self.loop)
-        self.loop.run_forever()
+    def __run_implementation_lifecycle(self, backend_info: dict, connect_event: threading.Event):
+        if self.loop:
+            if self.loop.is_running():
+                # event loop needs to be running=True, otherwise task won't run
+                asyncio.run_coroutine_threadsafe(self._connect_implementation_lifecycle(backend_info, connect_event), self.loop)
+            else:
+                logger.error('Your loop is not running, so LoggerFlow won\'t work, raising...')
+        else:
+            asyncio.run(self._connect_implementation_lifecycle(backend_info, connect_event))
 
-    async def __stop_async_loop(self, stop_event: threading.Event):
-        tasks_to_cancel = []
-        for task in asyncio.all_tasks():
-            coro = task.get_coro()
-            if hasattr(coro, '__qualname__'):
-                if 'WebhookLifecycle' in coro.__qualname__ or 'WebSocketLifecycle' in coro.__qualname__:
-                    tasks_to_cancel.append(task)
+    def _run_auto_release(self):
+        self.release()
+        logger.info('Lifecycle auto released')
 
-        for task in tasks_to_cancel:
-            task.cancel()
-
-        await asyncio.gather(*tasks_to_cancel, return_exceptions=True)
-        self.loop.stop()
-        stop_event.set()
-
-    def __create_and_run_thread_loop(self):
-        if not self.loop:
-            self.loop = asyncio.new_event_loop()
-        if not self.loop.is_running():
-            thread = threading.Thread(target=self.__start_async_loop, daemon=True)
-            thread.start()
-
-    def create_lifecycle(self, backend_info):
-        self.__create_and_run_thread_loop()
-        event = threading.Event()
-        asyncio.run_coroutine_threadsafe(self._connect_implementation_lifecycle(backend_info, event), self.loop)
-        event.wait(timeout=self.send_timeout)
-        if not event.is_set():
-            stop_event = threading.Event()
-            asyncio.run_coroutine_threadsafe(self.__stop_async_loop(stop_event), self.loop)
-            stop_event.wait(timeout=3)
-            self.loop.close()
+    def create_lifecycle(self, backend_info: dict):
+        # A daemon thread is created, in which its own event loop is initiated.
+        # If the event loop has already been passed, then the coroutine is started in a thread-like manner.
+        # That is, if someone passed a loop, then it operates on it itself.
+        connect_event = threading.Event()
+        target = partial(self.__run_implementation_lifecycle, backend_info, connect_event)
+        threading.Thread(target=target, daemon=True).start()
+        connect_event.wait(timeout=self.send_timeout)
+        if not connect_event.is_set():
             raise LifecycleException(
                 f'Lifecycle Server {self.lifecycle_url} don`t return success code, '
-                f'please check that LoggerFlow Server is running.'
+                f'please check that LoggerFlow Server is running.\n'
+                f'You can start loggerflow using, for example, the command:\n'
+                f'loggerflow run --host 127.0.0.1 --port 8000'
             )
         if self.auto_release:
             atexit.register(self._run_auto_release)
@@ -104,18 +93,24 @@ class Lifecycle:
     async def _connect_implementation_lifecycle(self, backend_info: dict, event: threading.Event):
         raise NotImplementedError
 
-    def release(self, force: bool = False):
-        self.mechanism = None
-
+    def release(self):
+        logger.info('Release working lifecycle...')
         if self.working_lifecycle_task:
-            logger.info('Release working lifecycle...')
-            self.working_lifecycle_task.cancel()
-        if force:
-            stop_event = threading.Event()
-            asyncio.run_coroutine_threadsafe(self.__stop_async_loop(stop_event), self.loop)
-            stop_event.wait(timeout=3)
-            self.loop.close()
+            loop = self.working_lifecycle_task.get_loop()
+            tasks_to_cancel = []
+            for task in asyncio.all_tasks(loop):
+                coro = task.get_coro()
+                if hasattr(coro, '__qualname__'):
+                    if 'WebhookLifecycle' in coro.__qualname__ or 'WebSocketLifecycle' in coro.__qualname__:
+                        tasks_to_cancel.append(task)
 
+            for task in tasks_to_cancel:
+                # time.sleep(1) is needed here because when simply running the example -
+                # there is not enough time to send the result, since this is a daemon thread and the result is not expected
+                time.sleep(1)
+                task.cancel()
+
+        self.mechanism = None
 
 class WebSocketLifecycle(Lifecycle, AbstractBackend):
 
@@ -156,9 +151,11 @@ class WebSocketLifecycle(Lifecycle, AbstractBackend):
             send_event.set()
 
     async def _connect_implementation_lifecycle(self, backend_info: dict, event: threading.Event) -> Task:
+        if not self.loop:
+            self.loop = asyncio.get_running_loop()
         task = asyncio.create_task(self._connect_to_websocket(backend_info, event))
         self.working_lifecycle_task = task
-        return self.working_lifecycle_task
+        return await task
 
     async def _connect_to_websocket(self, backend_info: dict, event: threading.Event):
         heartbeat = self.heartbeat
@@ -182,7 +179,7 @@ class WebSocketLifecycle(Lifecycle, AbstractBackend):
                                 except asyncio.TimeoutError:
                                     ...
                                 except Exception as e:
-                                    print(f"Error: {e}")
+                                    logger.warning(f"Error: {e}")
                                     break
 
                                 info = {
@@ -190,7 +187,11 @@ class WebSocketLifecycle(Lifecycle, AbstractBackend):
                                     'last_readings': self.get_client_readings(),
                                     'request_path': 'heartbeat'
                                 }
-                                await ws.send_json(info)
+                                try:
+                                    await ws.send_json(info)
+                                except Exception as e:
+                                    logger.warning(f"Error: {e}")
+
                                 await asyncio.sleep(self.heartbeat)
 
                 except (aiohttp.ClientError, asyncio.TimeoutError):
@@ -240,9 +241,11 @@ class WebhookLifecycle(Lifecycle, AbstractBackend):
             send_event.set()
 
     async def _connect_implementation_lifecycle(self, backend_info: dict, event: threading.Event):
+        if not self.loop:
+            self.loop = asyncio.get_running_loop()
         task = asyncio.create_task(self._connect_to_session(backend_info, event))
         self.working_lifecycle_task = task
-        return self.working_lifecycle_task
+        return await task
 
     async def _connect_to_session(self, backend_info: dict, event: threading.Event):
         try:
@@ -269,6 +272,9 @@ class WebhookLifecycle(Lifecycle, AbstractBackend):
                             await asyncio.sleep(heartbeat)
                     else:
                         logger.warning(f'Not connect to server webhook {self.lifecycle_url}')
+
+        except asyncio.CancelledError:
+            self.mechanism = None
         except Exception:
             self.mechanism = None
             logger.warning(f'Not connect to server webhook {self.lifecycle_url}')
