@@ -52,6 +52,17 @@
                         </div>
                     </div>
                   </div>
+                {% if settings.show_process_memory %}
+                    <div style="align-items: center;">
+                        <span id="reading-process-mem-{{ project.id }}">PROC MEM: {{ project.last_readings.process_memory }} GB/{{ project.last_readings.total_memory }} GB</span>
+                        <div class="progress" style="width: 100%; height: 5px; margin-top: 5px;">
+                          <div id="process-memory-usage-bar-{{ project.id }}" class="progress-bar" role="progressbar"
+                            style="width: {{ (project.last_readings.process_memory | float) / (project.last_readings.total_memory | float) * 100 }}%;"
+                            aria-valuenow="{{ (project.last_readings.process_memory | float) / (project.last_readings.total_memory | float) * 100 }}" aria-valuemin="0" aria-valuemax="100">
+                          </div>
+                        </div>
+                      </div>
+                {% endif %}
                   <div style="align-items: center;">
                     <span id="reading-mem-{{ project.id }}">MEM: {{ project.last_readings.used_memory }} GB/{{ project.last_readings.total_memory }} GB</span>
                     <div class="progress" style="width: 100%; height: 5px; margin-top: 5px;">
@@ -68,12 +79,12 @@
 
           {% if project.implementation == 'WEBHOOK' %}
             <td>Polling</td>
-            <td><button class="hide hide-project-btn" data-id="{{project.id}}">Hide</button></td>
+            <td><button class="btn btn-primary hide-project-btn" data-id="{{project.id}}" data-name="{{ project.project_name }}">Hide</button></td>
           {% elif project.implementation == 'WEBSOCKET' %}
             <td>Socket</td>
             <td>
 <!--              <button id="checkButton{{ project.id }}" type="button" class="checkButton hide" data-project-id="{{ project.id }}">Check</button>-->
-              <button class="hide hide-project-btn" data-id="{{project.id}}">Hide</button>
+              <button class="btn btn-primary hide-project-btn" data-id="{{project.id}}" data-name="{{ project.project_name }}">Hide</button>
             </td>
 
           {% else %}
