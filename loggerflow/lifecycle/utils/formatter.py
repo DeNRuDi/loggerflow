@@ -10,7 +10,25 @@ class ANSIColors:
     MAGENTA = "\033[35m"
     CYAN = "\033[36m"
     WHITE = "\033[37m"
+    BOLD = "\033[1m"
+    STATIC_COLORS = [RESET, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, BOLD]
+    COLOR_MAP = {
+        'red': RED,
+        'green': GREEN,
+        'yellow': YELLOW,
+        'blue': BLUE,
+        'magenta': MAGENTA,
+        'cyan': CYAN,
+        'white': WHITE,
+        'no': 'no'
+    }
 
+    @staticmethod
+    def format_text(text: str, color: str):
+        color_code = ANSIColors.COLOR_MAP.get(color.lower())
+        if color_code == 'no':
+            return text
+        return f'{ANSIColors.BOLD}{color_code}{text}{ANSIColors.RESET}'
 
 class ColorFormatter(logging.Formatter):
     COLOR_MAP = {
