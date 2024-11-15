@@ -89,5 +89,18 @@
 
 
 .icon-container a i {
-    font-size: 25px;
+    font-size: 20px;
+}
+
+
+.traceback-line {
+    color: #11264a;
+    line-height: 1.5;
+    font-weight: bold;
+}
+
+#traceback1 {
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }

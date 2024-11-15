@@ -2,10 +2,69 @@
   color: white;
   background-color: #233354;
   transition: transform .3s ease-in-out;
+  border: none !important;
 }
 
 .btn:hover, .btn:focus {
   color: white;
   transform: scale(1.05);
   background-color: #233354;
+  border: none !important;
+}
+
+
+.btn:active {
+  color: white !important;
+  background-color: #233354 !important;
+  transform: scale(1.05);
+
+}
+
+
+.custom-switch:checked {
+  background-color: #233354;
+  border-color: #233354;
+}
+
+.custom-switch::before {
+  background-color: white;
+}
+
+
+.image-wrapper {
+  background: #233354;
+  padding-inline: 30px;
+  border-radius: 20%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.img-fluid {
+  width: 100px;
+  height: auto;
+}
+
+.text-center {
+  background: #f4f7fa;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 500px;
+  margin: 20px auto;
+}
+
+h2 {
+  color: #233354;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+p {
+  color: #5c6e8b;
+  font-size: 1rem;
+  margin-top: -5px;
 }

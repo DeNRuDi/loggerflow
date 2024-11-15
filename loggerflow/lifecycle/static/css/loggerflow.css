@@ -59,7 +59,6 @@
 
 .table tbody td {
 	text-align: center;
-	padding: 10px 10px;
 	font-size: 18px;
     border-left: 2px solid #233354;
 	border-right: 2px solid #233354;
@@ -78,6 +77,10 @@
     color: #ddd !important;
 }
 
+.text-white {
+    color: white !important;
+}
+
 .proj-status {
     width: 20px;
     height: 20px;
@@ -85,4 +88,28 @@
 
 #tasks-table {
     text-align: center;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #233354;
+    color: #ddd;
+
+}
+
+.nav-tabs .nav-link {
+    color: #233354;
+}
+
+
+.select-alarms {
+    min-width: 200px;
+    padding: 5px 10px;
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+.select-alarms:focus {
+    border-color: #80bdff;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
