@@ -151,7 +151,7 @@ Example with clean stacktrace from your app:
 LoggerFlow supports alarms, they can be easily and quickly connected to your projects. To make sure that the alarm is working, 
 you can see the Alarm Working status next to the project.
 
-You have 3 alarms to choose from:
+You have ready-made 3 alarms to choose from:
 - TelegramBackend;
 - DiscordBackend;
 - FileBackend;
