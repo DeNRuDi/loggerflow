@@ -1,3 +1,4 @@
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -5,7 +6,10 @@ from sqlalchemy.orm import sessionmaker
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
 
+
 Base = declarative_base()
+
+from loggerflow.lifecycle.database.models import LFSettings
 
 
 class Database:
@@ -22,6 +26,20 @@ class Database:
     async def init(self):
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+            async with self.session() as session:
+                result = await session.execute(select(LFSettings))
+                settings = result.scalars().first()
+                if not settings:
+                    settings = LFSettings(
+                        show_first_clean_traceback=False,
+                        show_process_memory=False,
+                        # save_metrics=True,
+                        backlight_traceback=True
+                    )
+                    session.add(settings)
+                    await session.commit()
+
+
 
     @classmethod
     @asynccontextmanager

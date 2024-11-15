@@ -5,4 +5,5 @@ from .file import FileBackend
 
 from typing import Union, List
 
-Backend = Union[AbstractBackend, List]
+Backend = Union[AbstractBackend, List, None]
+AlarmBackend = [TelegramBackend, DiscordBackend, FileBackend]

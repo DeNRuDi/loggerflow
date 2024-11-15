@@ -6,3 +6,6 @@ class LifecycleException(Exception):
 class BackendException(Exception):
     """Exception for Backend, if Backend incorrectly configured"""
     pass
+
+class NotCorrectAlarmException(Exception):
+    pass
