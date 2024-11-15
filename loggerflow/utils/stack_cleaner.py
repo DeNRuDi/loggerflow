@@ -1,15 +1,14 @@
+import re
+
+from typing_extensions import Literal
 from io import StringIO
 
-import re
+from loggerflow.lifecycle.utils.formatter import ANSIColors
 
 
 class StackCleaner:
     """
     Cleaner fot stacktrace.
-    # Some not correct clean for this kind of tracebacks at the parameter "clean"
-    # File "<string>", line 3, in raise_from
-    # File "/usr/local/lib/python3.10/site-packages/urllib3/connectionpool.py", line 461, in _make_request
-    #  httplib_response = conn.getresponse()
     """
 
     def clean_traceback(self, text: str, minimal: bool = False) -> str:
@@ -46,7 +45,9 @@ class StackCleaner:
             split_text = [row.strip() for row in text.splitlines() if row.strip() != '']
             last_line = split_text[-1]
 
-        parse_lines = re.findall(r'(File.+)\n(.+)', text)
+        # parse_lines = re.findall(r'(File.+)\n(.+)', text)
+        parse_lines = re.findall(r'(^\s*File.+)\n(?!\s*File)(.+)', text, flags=re.MULTILINE)
+
         for file_line, code_line in parse_lines:
             if (not re.search(r'[/\\][Pp]ython\d.*?[/\\]', file_line) and
                     not re.search(r'[/\\]site-packages[/\\]', file_line)):
@@ -56,3 +57,17 @@ class StackCleaner:
             return StringIO(text), last_line
 
         return traceback_string, last_line
+
+    @staticmethod
+    def format_traceback_with_backlight(text: str, format_type: Literal['html', 'terminal'], color: str = 'red') -> str:
+        parse_lines = re.findall(r'(^\s*File.+)\n(?!\s*File)(.+)', text, flags=re.MULTILINE)
+        for file_line, code_line in parse_lines:
+            if (not re.search(r'[/\\][Pp]ython\d.*?[/\\]', file_line)
+                    and not re.search(r'[/\\]site-packages[/\\]', file_line)):
+                if format_type == 'html':
+                    text = text.replace(file_line, f'<span class="traceback-line">{file_line}</span>')
+                    text = text.replace(code_line, f'<span class="traceback-line">{code_line}</span>')
+                elif format_type == 'terminal':
+                    text = text.replace(file_line, ANSIColors.format_text(file_line, color))
+                    text = text.replace(code_line, ANSIColors.format_text(code_line, color))
+        return text
