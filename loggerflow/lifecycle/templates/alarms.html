@@ -1,0 +1,464 @@
+{% extends "base.html" %}
+
+{% block import %}
+
+    <script src="/static/js/jquery-3.6.4.min.js"></script>
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/loggerflow_functions.js"></script>
+    <link href="/static/css/loggerflow.css" rel="stylesheet">
+    <link href="/static/css/pagination.css" rel="stylesheet">
+    <link href="/static/css/welcome.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css">
+{% endblock %}
+
+{% block container %}
+
+<div class="tab-content mt-3 ms-2 me-2" id="alarmTabsContent">
+
+    <ul class="nav nav-tabs" id="alarmTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="alarms-info-tab" data-bs-toggle="tab" data-bs-target="#alarms-info" type="button" role="tab" aria-controls="alarms-info" aria-selected="true">Alarms Info</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="alarms-tab" data-bs-toggle="tab" data-bs-target="#alarms" type="button" role="tab" aria-controls="alarms" aria-selected="false">Alarms</button>
+    </li>
+
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="alarms-connections" data-bs-toggle="tab" data-bs-target="#connections" type="button" role="tab" aria-controls="alarms" aria-selected="false">App Connections</button>
+    </li>
+
+  </ul>
+
+<div class="tab-content mt-4" id="alarmTabsContent">
+    <div class="tab-pane fade show active" id="alarms-info" role="tabpanel" aria-labelledby="alarms-info-tab">
+
+        <table id="alarms-info" class="table">
+            <thead>
+                <tr>
+                    <th>Project Name</th>
+                    <th>Alarmer Name</th>
+                    <th>Event Type</th>
+                    <th>Event Time</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if alarm_events %}
+                    <div class="d-flex justify-content-start mb-3">
+                        <button class="btn btn-danger" onclick="clearAllAlarmEvents()">Clear All Alarm Events</button>
+                    </div>
+                    {% for event in alarm_events %}
+                        <tr>
+                            <td>{{ event.project.project_name }}</td>
+                            <td>{{ event.alarm.alarmer_name }}</td>
+                            <td class="text-primary heartbeat">
+                                {% if event.event_type.value == 'STARTUP' %}
+                                    <img class="proj-status" src="/static/green_power.svg"/>
+                                {% elif event.event_type.value == 'SHUTDOWN' %}
+                                    <img class="proj-status" src="/static/red_power.svg"/>
+                                {% endif %}
+                            </td>
+                            <td>{{ event.event_time.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+                            <td>{{ event.message or "No message" }}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5">
+                            {% include 'welcome_alarm.html' %}
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        {% if total_pages > 1 %}
+        <div class="pagination">
+            {% if has_previous %}
+                <a href="{{ request.url_for('alarmer') }}?page={{ previous_page }}">Back</a>
+            {% endif %}
+
+            {% for num in range(1, total_pages + 1) %}
+                {% if num == 1 or num == total_pages or num >= page - 3 and num <= page + 3 %}
+                    {% if page == num %}
+                        <span class="current-page">{{ num }}</span>
+                    {% else %}
+                        <a href="{{ request.url_for('alarmer') }}?page={{ num }}">{{ num }}</a>
+                    {% endif %}
+                {% elif num == 2 or num == total_pages - 1 %}
+                    <span class="dots">...</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if has_next %}
+                <a href="{{ request.url_for('alarmer') }}?page={{ next_page }}">Next</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+
+    <div class="tab-pane fade" id="alarms" role="tabpanel" aria-labelledby="alarms-tab">
+      <table id="existing-alarms" class="table">
+        <thead>
+          <tr>
+            <th>Alarmer Name</th>
+            <th>Alarmer Type</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if alarms %}
+            {% for alarm in alarms %}
+            <tr id="alarm-{{ alarm.id }}">
+              <td>{{ alarm.alarmer_name }}</td>
+              <td>{{ alarm.backend_type }}</td>
+              <td>
+                <button class="btn" onclick="deleteAlarm({{ alarm.id }})">Delete</button>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+          <tr><td colspan="3">No created alarms</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+
+      <button class="btn cmt-3" onclick="showAddAlarmForm()">Add Alarmer</button>
+
+      <div id="alarm-form-block" style="display: none;">
+        <div id="alarm-form" class="mt-3">
+          <label for="alarm-type">Select alarm type:</label>
+          <div class="input-group">
+            <select id="alarm-type" class="form-control" onchange="showAlarmForm(this.value)">
+              <option value="">-- Select type --</option>
+              {% for alarm in alarm_forms %}
+                <option value="{{ alarm.type }}">{{ alarm.type }} </option>
+              {% endfor %}
+            </select>
+            <div class="input-group-append ms-3">
+              <button class="btn" onclick="deleteAlarmForm()">
+                <i class="mdi mdi-delete"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="alarm-details" class="mt-3" style="display: none;"></div>
+      <div id="alarm-buttons" class="mt-3" style="display: none;">
+        <button class="btn btn-info" onclick="testAlarm()">Check</button>
+        <button class="btn btn-primary" onclick="saveAlarm()">Save Alarm</button>
+      </div>
+    </div>
+  </div>
+
+<div class="tab-pane fade" id="connections" role="tabpanel" aria-labelledby="connections-tab">
+    <table id="connections-table" class="table">
+        <thead>
+            <tr>
+                <th>Project Name</th>
+                <th>Alarm Working</th>
+                <th>Heartbeat</th>
+                <th>Connected Alarms</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if projects %}
+                {% for project in projects %}
+                <tr id="project-{{ project.id }}">
+                    <td>{{ project.project_name }}</td>
+                    <td class="text-primary heartbeat">
+                    {% if project.id in working_alarms %}
+                        <img class="proj-status" src="/static/green_power.svg"/>
+                    {% else %}
+                        <img class="proj-status" src="/static/red_power.svg"/>
+                    {% endif %}
+                    </td>
+                    <td>{{ project.heartbeat }}</td>
+                    <td>
+                        <select id="alarms-select-{{ project.id }}" class="form-control select-alarms" multiple>
+                            {% if alarms %}
+                                {% for alarm in alarms %}
+                                    <option value="{{ alarm.id }}"
+                                        {% if alarm.id in project.connected_alarm_ids %}selected{% endif %}>
+                                        {{ alarm.alarmer_name }} ({{ alarm.backend_type }})
+                                    </option>
+                                {% endfor %}
+                            {% else %}
+                                <option disabled selected>No alarms available</option>
+                            {% endif %}
+                        </select>
+                    </td>
+
+                    <td>
+                        <button class="btn btn-primary" onclick="connectAlarmsToProject({{ project.id }}, '{{ project.project_name }}')">Save</button>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                    <tr><td colspan="5">No connected applications</td></tr>
+                {% endif %}
+        </tbody>
+    </table>
+</div>
+</div>
+
+
+
+<script>
+
+function clearAllAlarmEvents() {
+    if (confirm("Are you sure you want to clear all alarm events?")) {
+        fetch('/delete_alarm_events', {
+            method: 'DELETE',
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                return response.json().then(err => {
+                    throw new Error(err.message || 'Failed to clear alarm events.');
+                });
+            }
+        })
+        .catch(error => {
+            alert(`Error: ${error.message}`);
+        });
+    }
+}
+
+function showAddAlarmForm() {
+  document.getElementById('alarm-form-block').style.display = 'block';
+  document.getElementById('alarm-details').innerHTML = '';
+  document.getElementById('alarm-details').style.display = 'none';
+  document.getElementById('alarm-type').value = '';
+  document.getElementById('alarm-buttons').style.display = 'none';
+}
+
+function showAlarmForm(type) {
+  const alarmsData = {{ alarm_forms | tojson }};
+  const alarmDetails = document.getElementById('alarm-details');
+
+  alarmDetails.innerHTML = '';
+
+  const form = document.createElement('form');
+  form.id = 'alarm-form';
+
+  if (type) {
+    const nameFormGroup = document.createElement('div');
+    nameFormGroup.className = 'form-group';
+    const nameLabel = document.createElement('label');
+    nameLabel.innerText = 'Alarmer Name';
+    const nameInput = document.createElement('input');
+    nameInput.required = true;
+    nameInput.type = 'text';
+    nameInput.id = 'alarmer_name';
+    nameInput.name = 'alarmer_name';
+    nameInput.className = 'form-control';
+    nameFormGroup.appendChild(nameLabel);
+    nameFormGroup.appendChild(nameInput);
+    form.appendChild(nameFormGroup);
+
+    const selectedAlarm = alarmsData.find(alarm => alarm.type === type);
+    if (selectedAlarm) {
+      selectedAlarm.fields.forEach(field => {
+        const formGroup = document.createElement('div');
+        formGroup.className = 'form-group';
+        const label = document.createElement('label');
+        label.innerText = field.charAt(0).toUpperCase() + field.slice(1) + ':';
+        const input = document.createElement('input');
+        input.required = true;
+        input.type = 'text';
+        input.id = field;
+        input.name = field;
+        input.className = 'form-control';
+        formGroup.appendChild(label);
+        formGroup.appendChild(input);
+        form.appendChild(formGroup);
+      });
+
+      alarmDetails.appendChild(form);
+      alarmDetails.style.display = 'block';
+    }
+    const testMessageFormGroup = document.createElement('div');
+    testMessageFormGroup.className = 'form-group';
+
+    const testMessageLabel = document.createElement('label');
+    testMessageLabel.innerText = 'Test Message (Optional)';
+    const testMessageInput = document.createElement('input');
+    testMessageInput.required = false;
+    testMessageInput.type = 'text';
+    testMessageInput.id = 'test_message';
+    testMessageInput.name = 'test_message';
+    testMessageInput.value = 'Test Message from LoggerFlow';
+    testMessageInput.className = 'form-control';
+
+    testMessageFormGroup.appendChild(testMessageLabel);
+    testMessageFormGroup.appendChild(testMessageInput);
+
+    form.appendChild(testMessageFormGroup);
+
+    document.getElementById('alarm-buttons').style.display = 'block';
+  } else {
+
+    document.getElementById('alarm-buttons').style.display = 'none';
+    alarmDetails.style.display = 'none';
+  }
+}
+
+
+function deleteAlarmForm() {
+  document.getElementById('alarm-form-block').style.display = 'none';
+  document.getElementById('alarm-details').innerHTML = '';
+  document.getElementById('alarm-type').value = '';
+  document.getElementById('alarm-buttons').style.display = 'none';
+}
+
+function deleteAlarm(alarmId) {
+  $.ajax({
+    url: `/alarms/${alarmId}`,
+    type: 'DELETE',
+    success: function(result) {
+      window.location.hash = "secondTab";
+      location.reload();
+    },
+    error: function(err) {
+      alert('Error at deleting this alarm!');
+    }
+  });
+}
+
+function testAlarm() {
+  const alarmData = {};
+  const alarmDetails = document.getElementById('alarm-details');
+  const inputs = alarmDetails.getElementsByTagName('input');
+  const form = alarmDetails.querySelector('form');
+
+  const formIsValid = form.checkValidity();
+  if (!formIsValid) {
+    form.reportValidity();
+    return;
+  }
+
+  alarmData['type'] = document.getElementById('alarm-type').value;
+  for (const input of inputs) {
+    alarmData[input.id] = input.value;
+  }
+
+  $.ajax({
+    url: '/check_alarm',
+    type: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(alarmData),
+    success: function(response) {
+      alert(response.message);
+    },
+    error: function(err) {
+        console.log(err);
+      alert('Error at check this alarm!');
+    }
+  });
+}
+
+function saveAlarm() {
+  const alarmData = {};
+  const alarmDetails = document.getElementById('alarm-details');
+  const form = alarmDetails.querySelector('form');
+
+  const formIsValid = form.checkValidity();
+  if (!formIsValid) {
+    form.reportValidity();
+    return;
+  }
+
+  const inputs = alarmDetails.getElementsByTagName('input');
+  for (const input of inputs) {
+    alarmData[input.id] = input.value;
+  }
+
+  const alarmType = document.getElementById('alarm-type').value;
+  alarmData['backend_type'] = alarmType;
+
+  $.ajax({
+    url: '/add_alarm',
+    type: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(alarmData),
+    success: function(response) {
+      alert('Alarm added.');
+      window.location.hash = "secondTab";
+      location.reload();
+
+    },
+    error: function(err) {
+      alert('ERROR. Alarm don\'t added!');
+    }
+  });
+}
+
+
+function connectAlarmsToProject(projectId, projectName) {
+    const selectedAlarms = $(`#alarms-select-${projectId}`).val();
+    $.ajax({
+        url: `/connect_alarms_to_project`,
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ project_id: projectId, project_name: projectName, alarm_ids: selectedAlarms }),
+        success: function(response) {
+            alert('Alarms updated for the project.');
+            window.location.hash = "thirdTab";
+            location.reload();
+        },
+        error: function(err) {
+            alert('Error updating alarms for the project.');
+        }
+    });
+}
+
+
+function openSecondTab() {
+    const firstTab = document.getElementById('alarms-info');
+    const secondTab = document.getElementById('alarms');
+    firstTab.classList.remove('show', 'active');
+    firstTab.classList.add('fade-out');
+
+    setTimeout(() => {
+        secondTab.classList.add('show', 'active', 'fade');
+        secondTab.classList.remove('fade-out');
+
+        let alarmsTab = new bootstrap.Tab(document.getElementById('alarms-tab'));
+        alarmsTab.show();
+    }, 200);
+}
+
+function openThirdTab() {
+    const firstTab = document.getElementById('alarms-info');
+    const thirdTab = document.getElementById('connections');
+    firstTab.classList.remove('show', 'active');
+    firstTab.classList.add('fade-out');
+
+    setTimeout(() => {
+        thirdTab.classList.add('show', 'active', 'fade');
+        thirdTab.classList.remove('fade-out');
+
+        let connectionTab = new bootstrap.Tab(document.getElementById('alarms-connections'));
+        connectionTab.show();
+    }, 200);
+}
+
+
+window.addEventListener("DOMContentLoaded", () => {
+    if (window.location.hash === "#secondTab") {
+        openSecondTab();
+        window.history.replaceState(null, null, window.location.pathname);
+    } else if (window.location.hash === "#thirdTab") {
+        openThirdTab();
+        window.history.replaceState(null, null, window.location.pathname);
+    }
+});
+
+</script>
+
+{% endblock %}
