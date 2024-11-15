@@ -10,6 +10,7 @@ $(document).ready(function() {
 //      }
 //    });
 //  });
+  let heartbeatIntervalId = null;
 
   function getColumnIndexByName($table, columnName) {
     let columnIndex = $table.find('th').filter(function() {
@@ -18,7 +19,10 @@ $(document).ready(function() {
     return columnIndex;
   }
 
-  let heartbeatIntervalId = setInterval(updateHeartbeat, 1000);
+  if ($('#line-table tbody tr').length !== 1) {
+    heartbeatIntervalId = setInterval(updateHeartbeat, 1000);
+  }
+
   function updateHeartbeat() {
     let $table = $('#line-table');
     $.ajax({
@@ -46,24 +50,33 @@ $(document).ready(function() {
             let readings = project_data.last_readings;
             let cpuUsage = readings.cpu;
             let usedMemory = readings.used_memory;
+            let processMemory = readings.process_memory;
+
             let totalMemory = readings.total_memory;
 
-            let memoryUsage = (parseFloat(usedMemory) / parseFloat(totalMemory) * 100).toFixed(2);
 
             let cpuText = $row.find(`#reading-cpu-${project_data.project_id}`);
-            let memoryText = $row.find(`#reading-mem-${project_data.project_id}`);
-
             let cpuInfo = `CPU: ${cpuUsage}%/100%`;
             let cpuBar = $row.find(`#cpu-usage-bar-${project_data.project_id}`);
-
-            let memoryInfo = `MEM: ${usedMemory} GB/${totalMemory} GB`;
-            let memoryBar = $row.find(`#memory-usage-bar-${project_data.project_id}`);
-
             cpuText.html(cpuInfo);
             cpuBar.css('width', `${cpuUsage}%`).attr('aria-valuenow', cpuUsage);
 
+            let memoryText = $row.find(`#reading-mem-${project_data.project_id}`);
+            let memoryUsage = (parseFloat(usedMemory) / parseFloat(totalMemory) * 100).toFixed(2);
+            let memoryInfo = `MEM: ${usedMemory} GB/${totalMemory} GB`;
+            let memoryBar = $row.find(`#memory-usage-bar-${project_data.project_id}`);
             memoryText.html(memoryInfo);
             memoryBar.css('width', `${memoryUsage}%`).attr('aria-valuenow', memoryUsage);
+
+            let processMemoryText = $row.find(`#reading-process-mem-${project_data.project_id}`);
+            if (processMemoryText) {
+              let processMemoryUsage = (parseFloat(processMemory) / parseFloat(totalMemory) * 100).toFixed(2);
+              let processMemoryInfo = `PROC MEM: ${processMemory} GB/${totalMemory} GB`;
+              let processMemoryBar = $row.find(`#process-memory-usage-bar-${project_data.project_id}`);
+              processMemoryText.html(processMemoryInfo);
+              processMemoryBar.css('width', `${processMemoryUsage}%`).attr('aria-valuenow', processMemoryUsage);
+            }
+
 
           } else {
             $row.children('td').eq(lastReadingsIndex).html('-');
@@ -76,8 +89,13 @@ $(document).ready(function() {
         });
       },
       error: function() {
-        alert('An error occurred while updating the projects.');
-        clearInterval(heartbeatIntervalId);
+        if (heartbeatIntervalId) {
+          clearInterval(heartbeatIntervalId);
+          heartbeatIntervalId = null;
+        }
+
+        alert('Error updating table. Please reload the page.');
+
       }
     });
   }
@@ -105,10 +123,11 @@ $(document).ready(function() {
 
   $('.hide-project-btn').click(function() {
     let projectId = $(this).data('id');
+    let projectName = $(this).data('name');
     $.ajax({
       url: "/hide_or_return_project/",
       method: "POST",
-      data: JSON.stringify({'hidden': true, 'project_id': projectId}),
+      data: JSON.stringify({'hidden': true, 'project_id': projectId, 'project_name': projectName}),
       contentType: "application/json; charset=utf-8",
       dataType: "json",
       success: function(response) {
@@ -128,7 +147,6 @@ $(document).ready(function() {
         } else {
           let total_exceptions = 0;
           let errorIndex = getColumnIndexByName($table, 'Error counter');
-          console.log($tableBody);
           $tableBody.find('tr').not('.total').each(function() {
             let count = parseInt($(this).find('td').eq(errorIndex).text());
             total_exceptions += count;
@@ -138,7 +156,6 @@ $(document).ready(function() {
         }
       },
       error: function(xhr, status, error) {
-          console.log('er')
           alert('Error: Could not hide project.');
       }
     });
