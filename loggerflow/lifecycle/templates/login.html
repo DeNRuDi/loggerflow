@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body, html {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fa;
+        }
+        .text-center {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        .image-wrapper {
+            background: #233354;
+            padding: 20px;
+            border-radius: 20%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .img-fluid {
+            width: 100px;
+            height: auto;
+        }
+        .btn {
+            background-color: #1c2a3f;
+            color: #fff;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #314a69;
+        }
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="text-center">
+        <div class="image-wrapper">
+            <img src="/static/loggerflow_red_eye.svg" alt="LoggerFlow" class="img-fluid">
+        </div>
+        <h2>Login to LoggerFlow</h2>
+        <p>Enter your credentials to access the dashboard</p>
+        <form action="/login" method="post">
+            <input type="text" name="username" placeholder="Username" class="form-input" required>
+            <input type="password" name="password" placeholder="Password" class="form-input" required>
+            {% if message %}
+                <p style="color: red;">{{ message }}</p>
+            {% endif %}
+            <button type="submit" class="btn">Log In</button>
+        </form>
+
+    </div>
+</body>
+</html>
