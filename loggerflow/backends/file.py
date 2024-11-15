@@ -4,6 +4,7 @@ import aiofiles
 
 
 class FileBackend(AbstractBackend, Filter):
+    alarm_required_fields = ['file']
 
     def __init__(self, file: str = None):
         self.file = file

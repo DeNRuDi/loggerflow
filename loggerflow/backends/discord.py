@@ -6,6 +6,8 @@ from discordwebhook import Discord
 
 
 class DiscordBackend(AbstractBackend):
+    alarm_required_fields = ['webhook_url']
+
     def __init__(self, webhook_url: str, authors: list = None):
         self.webhook_url = webhook_url
         self.authors = authors

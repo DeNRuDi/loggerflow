@@ -2,12 +2,16 @@ from loggerflow.backends.abstract_backend import AbstractBackend
 from loggerflow.exceptions import BackendException
 from loggerflow.utils.filters import Filter
 
+from typing import Union
+
 import requests
 import aiohttp
 
 
 class TelegramBackend(AbstractBackend, Filter):
-    def __init__(self, token: str, chat_id: int,  authors: list = None):
+    alarm_required_fields = ['token', 'chat_id']
+
+    def __init__(self, token: str, chat_id: Union[int, str],  authors: list = None):
         self.token = token
         self.chat_id = chat_id
         self.authors = authors
