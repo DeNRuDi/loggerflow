@@ -482,4 +482,9 @@ You can also list alarms separated by commas.
 
 `loggerfow run --host 127.0.0.1 --port 8000 --custom-alarm "your_file.CustomAlarm, your_file.NewCustomAlarm"`
 
+In the browser you will see something like:
+
+![img.png](photos/create_custom_alarm.png)
+
+
 </details>
