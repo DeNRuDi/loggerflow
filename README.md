@@ -148,8 +148,7 @@ Example with clean stacktrace from your app:
 ### Alarms
 
 ![img.png](photos/connected_alarms.png)
-LoggerFlow supports alarms, they can be easily and quickly connected to your projects. To make sure that the alarm is working, 
-you can see the Alarm Working status next to the project.
+LoggerFlow supports alarms, they can be easily and quickly connected to your projects.
 
 You have ready-made 3 alarms to choose from:
 - TelegramBackend;
@@ -158,7 +157,7 @@ You have ready-made 3 alarms to choose from:
 - or your custom alarm backends;
 
 There is also a ready-made interface for quickly connecting your alarm.
-How to connect your custom alarm - see the in "**Creating custom backends/alarms section**".
+How to connect your custom alarm - see in "**Creating custom backends/alarms section**".
 
 You will see a window like this:
 
