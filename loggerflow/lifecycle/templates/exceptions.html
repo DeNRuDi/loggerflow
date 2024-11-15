@@ -3,6 +3,7 @@
 {% block import %}
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
     <link href="/static/css/exceptions.css" rel="stylesheet">
+    <link href="/static/css/welcome.css" rel="stylesheet">
     <link href="/static/css/pagination.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.2.96/css/materialdesignicons.min.css">
 {% endblock %}
@@ -25,9 +26,9 @@
                   <td class="header">Datetime</td>
                   <td>
                       <div class="date-icon-container">
-                          {{exception.error_date}}
+                          {{exception.error_date.strftime("%Y-%m-%d %H:%M:%S")}}
                           <div class="icon-container">
-                              <a href="/exceptions/{{project_id}}/delete/{{exception.id}}?page={{page}}">
+                              <a class="btn" href="/exceptions/{{project_id}}/delete/{{exception.id}}?page={{page}}">
                                   <i class="mdi mdi-delete"></i>
                               </a>
                           </div>
@@ -47,14 +48,22 @@
                   <details class="exception-details">
                       {% if exception.clean_traceback %}
                           <div class="form-check form-switch">
-                              <input class="form-check-input" type="checkbox" id="customSwitch{{ loop.index }}" onchange="toggleTraceback({{ loop.index }})">
+                              <input class="form-check-input custom-switch" type="checkbox" id="customSwitch{{ loop.index }}" onchange="toggleTraceback({{ loop.index }})" {% if settings.show_first_clean_traceback %} checked {% endif %}>
                               <label class="form-check-label ms-2" for="customSwitch{{ loop.index }}">Clean traceback</label>
                           </div>
                       {% endif %}
                       <summary>Show</summary>
 
-                      <pre id="traceback{{ loop.index }}" style="display: block;">{{ exception.traceback }}</pre>
-                      <pre id="cleanTraceback{{ loop.index }}" style="display: none;">{{ exception.clean_traceback }}</pre>
+                      <div id="traceback{{ loop.index }}"
+                           style="display: {% if settings.show_first_clean_traceback %} none {% else %} block {% endif %}; white-space: pre-wrap;">
+                            {{exception.traceback|safe }}
+                      </div>
+                      <div id="cleanTraceback{{ loop.index }}"
+                           style="display: {% if settings.show_first_clean_traceback %} block {% else %} none {% endif %}; white-space: pre-wrap;">
+                            {{ exception.clean_traceback }}
+                      </div>
+
+
                   </details>
                   </td>
               </tr>
@@ -62,8 +71,11 @@
 
         {% else %}
           <tr>
-              <td colspan="2" style="text-align: center; vertical-align: middle; font-size: 18px;">Not exceptions, woohoo...</td>
+            <td colspan="2">
+                {% include 'welcome_no_exceptions.html' %}
+            </td>
           </tr>
+
         </tbody>
         {% endif %}
   </table>
@@ -95,6 +107,15 @@
 </div>
 
 <script>
+  document.querySelectorAll("[id^='traceback'], [id^='cleanTraceback']").forEach(element => {
+      let lines = element.innerHTML.split("\n");
+      if (lines.length > 0) {
+          lines[0] = lines[0].replace(/^\s+/, '');
+          lines[1] = lines[1].replace(/^\s+/, '');
+      }
+      element.innerHTML = lines.join("\n");
+  });
+
 function toggleTraceback(index) {
     var checkbox = document.getElementById('customSwitch' + index);
     var traceback = document.getElementById('traceback' + index);
