@@ -95,7 +95,7 @@ You can also customize the server for yourself, including authorization via the 
     -d --database | SQLAlchemy database connection string, default is "sqlite+aiosqlite:///loggerflow.db"
     -a --auth | Auth credentials in format login:password
     --disable-log | Disable uvicorn log in terminal
-    -c --custom-alarm | single class or comma-separated list of custom alarm classes (e.g., "name_of_file.CustomAlarmBackend, test.AnotherAlarm")')
+    -c --custom-alarm | single class or comma-separated list of custom alarm classes (e.g., "name_of_file.CustomAlarmBackend, test.AnotherAlarm")
 
 </details>
 
