@@ -256,8 +256,10 @@ You may also be interested in looking at `TracebackBacklighter`, the description
 
 TracebackBacklighter is a tool that backlights lines of code from your project when an error occurs.
 <h5> Example with TracebackBacklighter: </h5>
+
 ![img.png](photos/traceback_backlighter.png)
     
+
     import requests
     from loggerflow import TracebackBacklighter
     
