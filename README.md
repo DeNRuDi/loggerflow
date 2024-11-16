@@ -13,7 +13,7 @@
 
 ![StartImage](photos/loggerflow.png)
 ![StartImage](photos/project_metrics.png)
-**Loggerflow is not just a library for tracking the status of your projects. This library is:**.
+**LoggerFlow is not just a library for tracking the status of your projects. This library is:**.
  - stacktracer with backlighting of **your project calls** (you most likely haven't seen anything like this before);
  - trace collector, quick connection and sending traceback to `Telegram`, `Discord` or `File`, as well as a ready-made interface for quick connection of your backend for sending traces;
  - lifecycle dashboard of connected projects, display of a clean traceback with a call only from your project;
